@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Browse World Cup matches without seeing results."
+    />
+    <title>World Cup, Spoiler Safe</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <p class="eyebrow">Spoiler-safe match guide</p>
+        <h1>World Cup, without the result</h1>
+        <p>
+          See who played and when. Scores, outcomes, players, and team-specific
+          events stay hidden until you mark a match watched and confirm.
+        </p>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="toolbar" aria-label="Match controls">
+        <div>
+          <h2>Matches</h2>
+          <p id="summary">Loading fixtures...</p>
+        </div>
+        <button id="refresh-button" class="button button--secondary" type="button">
+          Refresh
+        </button>
+      </section>
+
+      <div id="message" class="message" role="status" hidden></div>
+      <section id="matches" class="match-grid" aria-live="polite"></section>
+    </main>
+
+    <dialog id="spoiler-dialog">
+      <form method="dialog" class="dialog">
+        <p class="eyebrow">Spoiler warning</p>
+        <h2>Reveal the full result?</h2>
+        <p>
+          This will reveal the score, winner, teams involved in events, and
+          player names. Are you sure?
+        </p>
+        <div class="dialog__actions">
+          <button class="button button--secondary" value="cancel">Keep hidden</button>
+          <button id="confirm-reveal" class="button button--danger" value="confirm">
+            Reveal spoilers
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

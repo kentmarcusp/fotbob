@@ -18,6 +18,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--paper);
   color: var(--ink);
   font-family:
@@ -92,6 +93,9 @@ button {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 0.7rem 1rem;
   border: 1px solid var(--green);
@@ -128,7 +132,7 @@ button {
 
 .match-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
   gap: 1rem;
 }
 
@@ -143,6 +147,7 @@ button {
 }
 
 .match-card {
+  min-width: 0;
   padding: 1.4rem;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -164,6 +169,8 @@ button {
   font-size: 1.55rem;
   font-weight: 500;
   line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .team-name {
@@ -171,6 +178,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
+  max-width: 100%;
 }
 
 .country-flag {
@@ -224,6 +232,7 @@ button {
 .safe-event-list li {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
 }
 
 .safe-event-list li:last-child {
@@ -248,6 +257,14 @@ button {
   gap: 0.55rem;
   margin: 1rem 0 0.8rem;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.watched-toggle {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--green);
 }
 
 .revealed {
@@ -272,6 +289,7 @@ button {
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .message {
@@ -284,10 +302,12 @@ button {
 
 dialog {
   width: min(480px, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
   padding: 0;
   border: 0;
   border-radius: 18px;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  overflow-y: auto;
 }
 
 dialog::backdrop {
@@ -311,15 +331,93 @@ dialog::backdrop {
 
 @media (max-width: 560px) {
   .hero {
-    padding-top: 3.5rem;
+    padding: 3rem 1rem 2.75rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.35rem, 13vw, 3.5rem);
+    line-height: 1;
+  }
+
+  .hero p:last-child {
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .page {
+    padding: 1.5rem 1rem 3rem;
   }
 
   .toolbar {
-    align-items: start;
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+
+  .toolbar .button {
+    align-self: flex-start;
+  }
+
+  .match-grid {
+    gap: 0.8rem;
+  }
+
+  .match-card {
+    padding: 1.1rem;
+    border-radius: 14px;
+  }
+
+  .match-card__meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .match-card h3 {
+    margin: 1.1rem 0;
+    font-size: 1.4rem;
+  }
+
+  .team-name {
+    gap: 0.5rem;
+  }
+
+  .country-flag {
+    width: 28px;
+    height: 21px;
+    flex: 0 0 auto;
+  }
+
+  .match-card > .button,
+  .watch-control {
+    width: 100%;
+  }
+
+  .watch-control {
+    min-height: 44px;
+    margin-bottom: 0.65rem;
+    padding: 0.65rem 0.2rem;
+  }
+
+  .event-recap {
+    padding: 0.85rem;
+  }
+
+  .revealed__score {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dialog {
+    padding: 1.35rem;
   }
 
   .dialog__actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .dialog__actions .button {
+    width: 100%;
   }
 }

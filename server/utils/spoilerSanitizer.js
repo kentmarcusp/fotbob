@@ -1,6 +1,9 @@
 function alphabetizeTeams(teams) {
-  return [teams.home, teams.away].sort((first, second) =>
-    first.localeCompare(second),
+  return [
+    { name: teams.home, countryCode: teams.homeCountryCode || null },
+    { name: teams.away, countryCode: teams.awayCountryCode || null },
+  ].sort((first, second) =>
+    first.name.localeCompare(second.name),
   );
 }
 
@@ -59,8 +62,10 @@ function sanitizeFixture(fixture) {
 
   return {
     id: fixture.id,
-    homeTeam,
-    awayTeam,
+    homeTeam: homeTeam.name,
+    homeTeamCountryCode: homeTeam.countryCode,
+    awayTeam: awayTeam.name,
+    awayTeamCountryCode: awayTeam.countryCode,
     kickoffTime: fixture.kickoff,
     status: fixture.status.long,
     venue: fixture.venue,
@@ -124,7 +129,9 @@ function transformFixtureFullDetails(fixture) {
     status: fixture.status.long,
     competition: fixture.competition,
     homeTeam: fixture.teams.home,
+    homeTeamCountryCode: fixture.teams.homeCountryCode || null,
     awayTeam: fixture.teams.away,
+    awayTeamCountryCode: fixture.teams.awayCountryCode || null,
     finalScore: {
       home: fixture.goals.home,
       away: fixture.goals.away,

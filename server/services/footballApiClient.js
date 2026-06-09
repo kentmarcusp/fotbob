@@ -48,6 +48,70 @@ function teamName(team) {
   return team?.name || team?.shortName || team?.tla || "TBD";
 }
 
+const fifaToIsoCountryCode = {
+  ALG: "dz",
+  ARG: "ar",
+  AUS: "au",
+  AUT: "at",
+  BEL: "be",
+  BIH: "ba",
+  BRA: "br",
+  CAN: "ca",
+  CIV: "ci",
+  CMR: "cm",
+  COD: "cd",
+  COL: "co",
+  CPV: "cv",
+  CRC: "cr",
+  CRO: "hr",
+  CUW: "cw",
+  CZE: "cz",
+  DEN: "dk",
+  ECU: "ec",
+  EGY: "eg",
+  ENG: "gb-eng",
+  ESP: "es",
+  FRA: "fr",
+  GER: "de",
+  GHA: "gh",
+  HAI: "ht",
+  IRN: "ir",
+  IRQ: "iq",
+  ITA: "it",
+  JOR: "jo",
+  JPN: "jp",
+  KOR: "kr",
+  MAR: "ma",
+  MEX: "mx",
+  NED: "nl",
+  NIR: "gb-nir",
+  NOR: "no",
+  NZL: "nz",
+  PAN: "pa",
+  PAR: "py",
+  POL: "pl",
+  POR: "pt",
+  QAT: "qa",
+  KSA: "sa",
+  SCO: "gb-sct",
+  SEN: "sn",
+  RSA: "za",
+  SUI: "ch",
+  SWE: "se",
+  TUN: "tn",
+  TUR: "tr",
+  UKR: "ua",
+  URU: "uy",
+  USA: "us",
+  UZB: "uz",
+  WAL: "gb-wls",
+};
+
+function teamCountryCode(team) {
+  const tla = String(team?.tla || "").toUpperCase();
+  return fifaToIsoCountryCode[tla] || null;
+}
+
 function mapStatus(status) {
   const statusLabels = {
     SCHEDULED: "Scheduled",
@@ -192,6 +256,8 @@ function mapFixture(match) {
     teams: {
       home: homeTeam,
       away: awayTeam,
+      homeCountryCode: teamCountryCode(match.homeTeam),
+      awayCountryCode: teamCountryCode(match.awayTeam),
       ...winner,
     },
     goals: {

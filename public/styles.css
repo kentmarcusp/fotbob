@@ -166,6 +166,28 @@ button {
   line-height: 1.25;
 }
 
+.team-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.country-flag {
+  width: 32px;
+  height: 24px;
+  border: 1px solid rgba(23, 34, 27, 0.14);
+  border-radius: 3px;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(23, 34, 27, 0.12);
+}
+
+.country-flag--empty {
+  display: inline-block;
+  border-style: dashed;
+  box-shadow: none;
+}
+
 .versus {
   display: block;
   margin: 0.35rem 0;
@@ -235,6 +257,10 @@ button {
 }
 
 .revealed__score {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
   margin: 0 0 1rem;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.45rem;

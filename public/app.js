@@ -58,9 +58,9 @@ function createMatchCard(match) {
       <span>${escapeHtml(match.status || "Status unavailable")}</span>
     </div>
     <h3>
-      ${escapeHtml(match.homeTeam)}
+      ${formatTeamWithFlag(match.homeTeam, match.homeTeamCountryCode)}
       <span class="versus">and</span>
-      ${escapeHtml(match.awayTeam)}
+      ${formatTeamWithFlag(match.awayTeam, match.awayTeamCountryCode)}
     </h3>
     <p class="venue">${escapeHtml(match.venue || "Venue to be announced")}</p>
     <button class="button button--secondary recap-button" type="button">
@@ -143,6 +143,27 @@ function escapeHtml(value) {
   return element.innerHTML;
 }
 
+function formatTeamWithFlag(teamName, countryCode) {
+  const flag = countryCode
+    ? `<img
+        class="country-flag"
+        src="https://flagcdn.com/w40/${encodeURIComponent(countryCode)}.png"
+        srcset="https://flagcdn.com/w80/${encodeURIComponent(countryCode)}.png 2x"
+        width="32"
+        height="24"
+        alt=""
+        loading="lazy"
+      >`
+    : '<span class="country-flag country-flag--empty" aria-hidden="true"></span>';
+
+  return `
+    <span class="team-name">
+      ${flag}
+      <span>${escapeHtml(teamName)}</span>
+    </span>
+  `;
+}
+
 function formatSafeEvent(event) {
   const minute =
     event.minute === null
@@ -200,9 +221,11 @@ function renderRevealedMatch(match) {
 
   revealed.innerHTML = `
     <p class="revealed__score">
-      ${escapeHtml(match.homeTeam)} ${match.finalScore.home ?? "-"}
+      ${formatTeamWithFlag(match.homeTeam, match.homeTeamCountryCode)}
+      ${match.finalScore.home ?? "-"}
       &ndash;
-      ${match.finalScore.away ?? "-"} ${escapeHtml(match.awayTeam)}
+      ${match.finalScore.away ?? "-"}
+      ${formatTeamWithFlag(match.awayTeam, match.awayTeamCountryCode)}
     </p>
     <p><strong>Winner:</strong> ${escapeHtml(match.winner || "Draw or unavailable")}</p>
     ${renderPenalties(match)}

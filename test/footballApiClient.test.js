@@ -78,8 +78,8 @@ test("football-data.org fixtures are mapped into the internal provider shape", a
                 venue: "Example Stadium",
                 competition: { name: "FIFA World Cup" },
                 season: { startDate: "2026-06-11" },
-                homeTeam: { name: "France" },
-                awayTeam: { name: "Argentina" },
+                homeTeam: { name: "France", tla: "FRA" },
+                awayTeam: { name: "Argentina", tla: "ARG" },
                 score: {
                   winner: "AWAY_TEAM",
                   fullTime: { home: 1, away: 2 },
@@ -120,6 +120,8 @@ test("football-data.org fixtures are mapped into the internal provider shape", a
     assert.equal(requestedPath, "/competitions/WC/matches");
     assert.deepEqual(requestedOptions, { params: { season: "2026" } });
     assert.equal(fixtures[0].teams.awayWinner, true);
+    assert.equal(fixtures[0].teams.homeCountryCode, "fr");
+    assert.equal(fixtures[0].teams.awayCountryCode, "ar");
     assert.equal(fixtures[0].events[0].detail, "Penalty Scored");
     assert.equal(fixtures[0].events[1].detail, "Second Yellow Card");
   } finally {

@@ -8,10 +8,9 @@ function createHttpError(message, status) {
 
 function getProviderConfiguration() {
   const baseURL =
-    process.env.FOOTBALL_API_BASE_URL ||
-    "https://v3.football.api-sports.io";
+    process.env.FOOTBALL_API_BASE_URL || "https://api.football-data.org/v4";
   const apiKey = process.env.FOOTBALL_API_KEY;
-  const league = process.env.WORLD_CUP_LEAGUE_ID || "1";
+  const competitionCode = process.env.WORLD_CUP_COMPETITION_CODE || "WC";
   const season = process.env.WORLD_CUP_SEASON || "2026";
 
   if (!apiKey) {
@@ -21,7 +20,7 @@ function getProviderConfiguration() {
     );
   }
 
-  return { apiKey, baseURL, league, season };
+  return { apiKey, baseURL, competitionCode, season };
 }
 
 function createClient(configuration) {
@@ -29,71 +28,183 @@ function createClient(configuration) {
     baseURL: configuration.baseURL,
     timeout: 10000,
     headers: {
-      "x-apisports-key": configuration.apiKey,
+      "X-Auth-Token": configuration.apiKey,
     },
   });
 }
 
-function getProviderResponseItems(response, resourceName) {
-  const items = response?.data?.response;
-
-  if (!Array.isArray(items)) {
+function requireArray(value, resourceName) {
+  if (!Array.isArray(value)) {
     throw createHttpError(
       `The football data provider returned an unexpected ${resourceName} response.`,
       502,
     );
   }
 
-  return items;
+  return value;
 }
 
-function mapProviderFixture(fixture) {
-  if (!fixture?.fixture || !fixture?.teams) {
+function teamName(team) {
+  return team?.name || team?.shortName || team?.tla || "TBD";
+}
+
+function mapStatus(status) {
+  const statusLabels = {
+    SCHEDULED: "Scheduled",
+    TIMED: "Scheduled",
+    IN_PLAY: "In Play",
+    PAUSED: "Paused",
+    FINISHED: "Finished",
+    SUSPENDED: "Suspended",
+    POSTPONED: "Postponed",
+    CANCELLED: "Cancelled",
+    AWARDED: "Awarded",
+  };
+
+  return statusLabels[status] || status || "Status unavailable";
+}
+
+function mapGoal(goal) {
+  return {
+    elapsed: goal.minute ?? null,
+    extra: goal.injuryTime ?? null,
+    team: goal.team?.name || null,
+    player: goal.scorer?.name || null,
+    assist: goal.assist?.name || null,
+    type: "Goal",
+    detail: goal.type === "PENALTY" ? "Penalty Scored" : goal.type,
+    comments: null,
+  };
+}
+
+function mapBooking(booking) {
+  const card = String(booking.card || "").toUpperCase();
+
+  return {
+    elapsed: booking.minute ?? null,
+    extra: null,
+    team: booking.team?.name || null,
+    player: booking.player?.name || null,
+    assist: null,
+    type: "Card",
+    detail: card === "YELLOW_RED" ? "Second Yellow Card" : `${card} Card`,
+    comments: null,
+  };
+}
+
+function mapSubstitution(substitution) {
+  return {
+    elapsed: substitution.minute ?? null,
+    extra: null,
+    team: substitution.team?.name || null,
+    player: substitution.playerOut?.name || null,
+    assist: substitution.playerIn?.name || null,
+    type: "Substitution",
+    detail: "Substitution",
+    comments: null,
+  };
+}
+
+function mapPenalty(penalty) {
+  return {
+    elapsed: penalty.minute ?? null,
+    extra: penalty.injuryTime ?? null,
+    team: penalty.team?.name || null,
+    player: penalty.player?.name || null,
+    assist: null,
+    type: "Penalty",
+    detail:
+      penalty.scored === true
+        ? "Penalty Scored"
+        : penalty.scored === false
+          ? "Penalty Missed"
+          : "Penalty",
+    comments: null,
+  };
+}
+
+function mapFixtureEvents(match) {
+  const goals = requireArray(match.goals || [], "fixture goals").map(mapGoal);
+  const bookings = requireArray(
+    match.bookings || [],
+    "fixture bookings",
+  ).map(mapBooking);
+  const substitutions = requireArray(
+    match.substitutions || [],
+    "fixture substitutions",
+  ).map(mapSubstitution);
+
+  const goalPenaltyPlayers = new Set(
+    goals
+      .filter((event) => event.detail === "Penalty Scored")
+      .map((event) => event.player)
+      .filter(Boolean),
+  );
+  const penalties = requireArray(match.penalties || [], "fixture penalties")
+    .map(mapPenalty)
+    .filter(
+      (event) =>
+        event.elapsed !== null ||
+        !goalPenaltyPlayers.has(event.player),
+    );
+
+  return [...goals, ...bookings, ...substitutions, ...penalties];
+}
+
+function mapWinner(score, homeTeam, awayTeam) {
+  if (score?.winner === "HOME_TEAM") {
+    return { homeWinner: true, awayWinner: false };
+  }
+
+  if (score?.winner === "AWAY_TEAM") {
+    return { homeWinner: false, awayWinner: true };
+  }
+
+  return { homeWinner: false, awayWinner: false };
+}
+
+function mapFixture(match) {
+  if (!match?.id || !match?.homeTeam || !match?.awayTeam) {
     throw createHttpError(
       "The football data provider returned an incomplete fixture.",
       502,
     );
   }
 
+  const homeTeam = teamName(match.homeTeam);
+  const awayTeam = teamName(match.awayTeam);
+  const winner = mapWinner(match.score, homeTeam, awayTeam);
+
   return {
-    id: String(fixture.fixture.id),
-    kickoff: fixture.fixture.date || null,
-    venue: fixture.fixture.venue?.name || null,
-    city: fixture.fixture.venue?.city || null,
+    id: String(match.id),
+    kickoff: match.utcDate || null,
+    venue: match.venue || null,
+    city: null,
     status: {
-      short: fixture.fixture.status?.short || null,
-      long: fixture.fixture.status?.long || null,
+      short: match.status || null,
+      long: mapStatus(match.status),
     },
     competition: {
-      name: fixture.league?.name || "World Cup",
-      round: fixture.league?.round || null,
-      season: fixture.league?.season || null,
+      name: match.competition?.name || "FIFA World Cup",
+      round: match.stage || match.group || match.matchday || null,
+      season: match.season?.startDate?.slice(0, 4) || null,
     },
     teams: {
-      home: fixture.teams.home?.name || "TBD",
-      away: fixture.teams.away?.name || "TBD",
-      homeWinner: fixture.teams.home?.winner ?? null,
-      awayWinner: fixture.teams.away?.winner ?? null,
+      home: homeTeam,
+      away: awayTeam,
+      ...winner,
     },
     goals: {
-      home: fixture.goals?.home ?? null,
-      away: fixture.goals?.away ?? null,
+      home: match.score?.fullTime?.home ?? null,
+      away: match.score?.fullTime?.away ?? null,
     },
-    score: fixture.score || null,
-    events: fixture.events || [],
-  };
-}
-
-function mapProviderEvent(event) {
-  return {
-    elapsed: event.time?.elapsed ?? null,
-    extra: event.time?.extra ?? null,
-    team: event.team?.name || null,
-    player: event.player?.name || null,
-    assist: event.assist?.name || null,
-    type: event.type || null,
-    detail: event.detail || null,
-    comments: event.comments || null,
+    score: {
+      penalty: {
+        home: match.score?.penalties?.home ?? null,
+        away: match.score?.penalties?.away ?? null,
+      },
+    },
+    events: mapFixtureEvents(match),
   };
 }
 
@@ -104,6 +215,20 @@ function translateProviderError(error) {
 
   if (!error.response) {
     return createHttpError("The football data provider is unavailable.", 502);
+  }
+
+  if (error.response.status === 403) {
+    return createHttpError(
+      "The football data provider rejected the API key or plan access.",
+      502,
+    );
+  }
+
+  if (error.response.status === 429) {
+    return createHttpError(
+      "The football data provider rate limit was reached.",
+      503,
+    );
   }
 
   return createHttpError(
@@ -117,33 +242,12 @@ async function getWorldCupFixtures() {
   const client = createClient(configuration);
 
   try {
-    const response = await client.get("/fixtures", {
-      params: {
-        league: configuration.league,
-        season: configuration.season,
-      },
-    });
-
-    return getProviderResponseItems(response, "fixtures").map(
-      mapProviderFixture,
+    const response = await client.get(
+      `/competitions/${configuration.competitionCode}/matches`,
+      { params: { season: configuration.season } },
     );
-  } catch (error) {
-    throw translateProviderError(error);
-  }
-}
 
-async function getFixtureEvents(fixtureId) {
-  const configuration = getProviderConfiguration();
-  const client = createClient(configuration);
-
-  try {
-    const response = await client.get("/fixtures/events", {
-      params: { fixture: fixtureId },
-    });
-
-    return getProviderResponseItems(response, "fixture events").map(
-      mapProviderEvent,
-    );
+    return requireArray(response?.data?.matches, "fixtures").map(mapFixture);
   } catch (error) {
     throw translateProviderError(error);
   }
@@ -154,30 +258,25 @@ async function getFixtureFullDetails(fixtureId) {
   const client = createClient(configuration);
 
   try {
-    const [fixtureResponse, events] = await Promise.all([
-      client.get("/fixtures", { params: { id: fixtureId } }),
-      getFixtureEvents(fixtureId),
-    ]);
+    const response = await client.get(`/matches/${fixtureId}`);
 
-    const fixture = getProviderResponseItems(
-      fixtureResponse,
-      "fixture details",
-    )[0];
-
-    if (!fixture) {
+    if (!response?.data?.id) {
       throw createHttpError("Fixture not found.", 404);
     }
 
-    const mappedFixture = mapProviderFixture(fixture);
-    mappedFixture.events = events;
-    return mappedFixture;
+    return mapFixture(response.data);
   } catch (error) {
-    if (error.status === 404) {
-      throw error;
+    if (error.response?.status === 404) {
+      throw createHttpError("Fixture not found.", 404);
     }
 
     throw translateProviderError(error);
   }
+}
+
+async function getFixtureEvents(fixtureId) {
+  const fixture = await getFixtureFullDetails(fixtureId);
+  return fixture.events;
 }
 
 module.exports = {

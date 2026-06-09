@@ -2,7 +2,7 @@
 
 A small Node.js application for browsing World Cup fixtures and match events
 without accidentally seeing results. Express serves a plain HTML, CSS, and
-JavaScript frontend and retrieves football data through API-Football/API-Sports.
+JavaScript frontend and retrieves football data through football-data.org.
 
 ## Spoiler-safe design
 
@@ -19,7 +19,7 @@ The default browser experience receives only backend-sanitized data:
   outcomes and VAR beneficiaries are never included.
 - Teams on the match list are alphabetized to avoid implying home/away roles.
 - Unknown provider event types become the neutral label `Match Event`.
-- Raw API-Sports responses are mapped to internal objects and are never passed
+- Raw football-data.org responses are mapped to internal objects and are never passed
   directly to spoiler-safe endpoints.
 
 Spoiler-containing data is isolated in
@@ -44,7 +44,7 @@ directly calls the full-details endpoint can receive spoilers.
 ## Requirements
 
 - Node.js 18 or newer
-- An API-Football/API-Sports API key with fixture coverage
+- A football-data.org API key with FIFA World Cup coverage
 
 ## Setup
 
@@ -59,9 +59,9 @@ directly calls the full-details endpoint can receive spoilers.
 3. Add your provider API key and review the tournament configuration:
 
    ```env
-   FOOTBALL_API_BASE_URL=https://v3.football.api-sports.io
+   FOOTBALL_API_BASE_URL=https://api.football-data.org/v4
    FOOTBALL_API_KEY=your_key_here
-   WORLD_CUP_LEAGUE_ID=1
+   WORLD_CUP_COMPETITION_CODE=WC
    WORLD_CUP_SEASON=2026
    SPOILER_SAFE_MODE=true
    PORT=3000
@@ -98,9 +98,9 @@ instructions.
 
 | Variable | Purpose |
 | --- | --- |
-| `FOOTBALL_API_BASE_URL` | Provider base URL. Defaults to API-Sports v3. |
-| `FOOTBALL_API_KEY` | Required API-Sports key sent only by the backend. |
-| `WORLD_CUP_LEAGUE_ID` | Provider competition ID. Defaults to `1`. |
+| `FOOTBALL_API_BASE_URL` | Provider base URL. Defaults to football-data.org v4. |
+| `FOOTBALL_API_KEY` | Required football-data.org token sent only by the backend. |
+| `WORLD_CUP_COMPETITION_CODE` | Provider competition code. Defaults to `WC`. |
 | `WORLD_CUP_SEASON` | Provider season value. Defaults to `2026`. |
 | `SPOILER_SAFE_MODE` | Reserved configuration flag. Safe endpoints remain sanitized regardless of its value. |
 | `PORT` | Local Express port. Defaults to `3000`. |
@@ -113,14 +113,18 @@ network failures and unexpected provider response shapes return `502` errors.
 All provider-specific URLs, headers, and response mapping live in
 `server/services/footballApiClient.js`. The current implementation uses:
 
-- `/fixtures?league=...&season=...`
-- `/fixtures/events?fixture=...`
-- `/fixtures?id=...`
+- `/competitions/WC/matches?season=...`
+- `/matches/{fixtureId}`
 
-API-Sports plans, rate limits, tournament IDs, historical coverage, and event
-availability can change. Confirm that the configured league and season are
-available for your account. Scheduled fixtures commonly have no events yet;
-the UI treats that as a normal empty recap.
+football-data.org plans, rate limits, competition coverage, historical coverage,
+and event availability can change. Scheduled fixtures commonly have no events
+yet; the UI treats that as a normal empty recap.
+
+football-data.org exposes goals, bookings, substitutions, and penalties in match
+details. Its public v4 documentation does not define a dedicated VAR or
+disallowed-goal event feed, so those events are shown only if the provider adds
+an identifiable event in future. Some shootout penalties may not include a
+minute and are displayed with an unavailable time.
 
 ## Project structure
 

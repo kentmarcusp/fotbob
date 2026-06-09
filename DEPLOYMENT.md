@@ -9,7 +9,7 @@ This project is prepared for Vercel's native Express support:
 - `vercel.json` configures the function and baseline response headers.
 - `.env` and `.vercel/` are excluded from Git.
 
-Vercel runs the Express application as one Vercel Function. The API-Sports key
+Vercel runs the Express application as one Vercel Function. The football-data.org key
 stays in Vercel environment variables and is never included in browser assets.
 
 ## First deployment
@@ -36,7 +36,7 @@ Add or confirm the non-secret configuration:
 
 ```powershell
 vercel env add FOOTBALL_API_BASE_URL
-vercel env add WORLD_CUP_LEAGUE_ID
+vercel env add WORLD_CUP_COMPETITION_CODE
 vercel env add WORLD_CUP_SEASON
 vercel env add SPOILER_SAFE_MODE
 ```
@@ -44,8 +44,8 @@ vercel env add SPOILER_SAFE_MODE
 Recommended values:
 
 ```env
-FOOTBALL_API_BASE_URL=https://v3.football.api-sports.io
-WORLD_CUP_LEAGUE_ID=1
+FOOTBALL_API_BASE_URL=https://api.football-data.org/v4
+WORLD_CUP_COMPETITION_CODE=WC
 WORLD_CUP_SEASON=2026
 SPOILER_SAFE_MODE=true
 ```
@@ -95,7 +95,7 @@ npm run dev
 
 ## Operational notes
 
-- API-Sports rate limits still apply to serverless requests.
+- football-data.org rate limits still apply to serverless requests.
 - Full details are never prefetched and responses use `Cache-Control: no-store`.
 - Browser watched state remains in `localStorage`; Vercel stores no user state.
 - There is no database or persistent filesystem requirement.

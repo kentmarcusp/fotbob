@@ -2,7 +2,8 @@
 
 This project is prepared for Vercel's native Express support:
 
-- `index.js` exports the Express application as the serverless entry point.
+- `api/[...path].js` exports the Express application as the API catch-all
+  serverless entry point.
 - `server/index.js` remains the local Node.js listener.
 - `public/` contains browser assets served by Vercel's CDN.
 - `vercel.json` configures the function and baseline response headers.

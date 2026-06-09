@@ -89,7 +89,7 @@ npm test
 
 ## Deploy to Vercel
 
-The app includes a Vercel-compatible Express entry point, CDN-served assets in
+The app includes a Vercel-compatible Express API function, CDN-served assets in
 `public/`, and `vercel.json`. See [DEPLOYMENT.md](DEPLOYMENT.md) for CLI,
 environment-variable, GitHub integration, preview, and production deployment
 instructions.

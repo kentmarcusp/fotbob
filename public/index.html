@@ -28,9 +28,17 @@
           <h2>Matches</h2>
           <p id="summary">Loading fixtures...</p>
         </div>
-        <button id="refresh-button" class="button button--secondary" type="button">
-          Refresh
-        </button>
+        <div class="toolbar__actions">
+          <label class="date-filter">
+            <span>Match date</span>
+            <select id="date-filter" disabled>
+              <option value="all">All dates</option>
+            </select>
+          </label>
+          <button id="refresh-button" class="button button--secondary" type="button">
+            Refresh
+          </button>
+        </div>
       </section>
 
       <div id="message" class="message" role="status" hidden></div>

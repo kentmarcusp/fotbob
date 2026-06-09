@@ -2,10 +2,12 @@ const matchesContainer = document.querySelector("#matches");
 const summary = document.querySelector("#summary");
 const message = document.querySelector("#message");
 const refreshButton = document.querySelector("#refresh-button");
+const dateFilter = document.querySelector("#date-filter");
 const spoilerDialog = document.querySelector("#spoiler-dialog");
 
 const watchedStorageKey = "world-cup-watched-matches";
 let pendingRevealId = null;
+let matches = [];
 
 function getWatchedMatchIds() {
   try {
@@ -39,6 +41,33 @@ function formatKickoff(kickoff) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(kickoffDate);
+}
+
+function getLocalDateKey(kickoff) {
+  const kickoffDate = new Date(kickoff);
+
+  if (Number.isNaN(kickoffDate.getTime())) {
+    return null;
+  }
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(kickoffDate);
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function formatFilterDate(kickoff) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(kickoff));
 }
 
 function showMessage(text) {
@@ -147,6 +176,56 @@ function createMatchCard(match) {
   });
 
   return card;
+}
+
+function populateDateFilter(fixtures) {
+  const selectedDate = dateFilter.value;
+  const dates = new Map();
+
+  fixtures.forEach((match) => {
+    const dateKey = getLocalDateKey(match.kickoffTime);
+
+    if (dateKey && !dates.has(dateKey)) {
+      dates.set(dateKey, formatFilterDate(match.kickoffTime));
+    }
+  });
+
+  dateFilter.replaceChildren(new Option("All dates", "all"));
+  [...dates.entries()]
+    .sort(([first], [second]) => first.localeCompare(second))
+    .forEach(([dateKey, label]) => {
+      dateFilter.add(new Option(label, dateKey));
+    });
+
+  dateFilter.value = dates.has(selectedDate) ? selectedDate : "all";
+  dateFilter.disabled = dates.size === 0;
+}
+
+function renderMatches() {
+  const selectedDate = dateFilter.value;
+  const visibleMatches =
+    selectedDate === "all"
+      ? matches
+      : matches.filter(
+          (match) => getLocalDateKey(match.kickoffTime) === selectedDate,
+        );
+
+  matchesContainer.replaceChildren();
+
+  if (visibleMatches.length === 0) {
+    matchesContainer.innerHTML =
+      '<p class="empty-state">No matches are scheduled for this date.</p>';
+    summary.textContent = "No fixtures on this date";
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  visibleMatches.forEach((match) => fragment.append(createMatchCard(match)));
+  matchesContainer.append(fragment);
+  summary.textContent =
+    selectedDate === "all"
+      ? `${visibleMatches.length} spoiler-safe matches`
+      : `${visibleMatches.length} matches on ${dateFilter.selectedOptions[0].textContent}`;
 }
 
 function escapeHtml(value) {
@@ -291,17 +370,20 @@ async function loadMatches() {
     const data = await readJsonResponse(response, "Could not load fixtures.");
 
     if (data.length === 0) {
+      matches = [];
+      populateDateFilter(matches);
       matchesContainer.innerHTML =
         '<p class="empty-state">No World Cup matches were found for the configured season.</p>';
       summary.textContent = "No fixtures found";
       return;
     }
 
-    const fragment = document.createDocumentFragment();
-    data.forEach((match) => fragment.append(createMatchCard(match)));
-    matchesContainer.append(fragment);
-    summary.textContent = `${data.length} spoiler-safe matches`;
+    matches = data;
+    populateDateFilter(matches);
+    renderMatches();
   } catch (error) {
+    matches = [];
+    populateDateFilter(matches);
     summary.textContent = "Fixtures unavailable";
     showMessage(error.message);
   } finally {
@@ -336,5 +418,6 @@ spoilerDialog.addEventListener("close", async () => {
   }
 });
 
+dateFilter.addEventListener("change", renderMatches);
 refreshButton.addEventListener("click", loadMatches);
 loadMatches();

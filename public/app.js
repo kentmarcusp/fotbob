@@ -46,6 +46,22 @@ function showMessage(text) {
   message.hidden = !text;
 }
 
+async function readJsonResponse(response, fallbackMessage) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(response.ok ? fallbackMessage : `${fallbackMessage} (${response.status})`);
+  }
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || fallbackMessage);
+  }
+
+  return data;
+}
+
 function createMatchCard(match) {
   const watched = getWatchedMatchIds().has(match.id);
   const card = document.createElement("article");
@@ -112,11 +128,7 @@ function createMatchCard(match) {
       const response = await fetch(
         `/api/matches/${encodeURIComponent(match.id)}/events`,
       );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Could not load the recap.");
-      }
+      const data = await readJsonResponse(response, "Could not load the recap.");
 
       eventRecap.innerHTML = data.length
         ? `<ol class="safe-event-list">${data
@@ -263,11 +275,7 @@ async function revealMatch(matchId) {
   const response = await fetch(
     `/api/matches/${encodeURIComponent(matchId)}/full-details`,
   );
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Could not reveal the match.");
-  }
+  const data = await readJsonResponse(response, "Could not reveal the match.");
 
   renderRevealedMatch(data);
 }
@@ -280,11 +288,7 @@ async function loadMatches() {
 
   try {
     const response = await fetch("/api/matches");
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Could not load fixtures.");
-    }
+    const data = await readJsonResponse(response, "Could not load fixtures.");
 
     if (data.length === 0) {
       matchesContainer.innerHTML =

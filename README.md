@@ -11,12 +11,12 @@ The default browser experience receives only backend-sanitized data:
 - `GET /api/matches` returns neutral team names, kickoff time, status, and venue.
   It does not return scores, winners, penalties, or event data.
 - `GET /api/matches/:fixtureId/events` returns only event minute, extra time,
-  and a normalized event type.
+  and the neutral label `Event happened`.
 - Safe events omit team, player, assist, home/away side, score, comments, and
   provider-specific detail text.
-- Goals, red cards, penalties, and VAR/disallowed-goal events are collapsed to
-  `Goal`, `Red Card`, `Penalty`, or `Disallowed Goal / VAR Check`. Penalty
-  outcomes and VAR beneficiaries are never included.
+- Goals, cards, substitutions, penalties, and VAR events all appear only as
+  `Event happened`. The safe recap does not reveal what happened or who
+  benefited.
 - Teams on the match list are alphabetized to avoid implying home/away roles.
 - Unknown provider event types become the neutral label `Match Event`.
 - Raw football-data.org responses are mapped to internal objects and are never passed

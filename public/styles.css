@@ -359,6 +359,22 @@ button {
   overflow-wrap: anywhere;
 }
 
+.event-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink);
+}
+
+.event-flag {
+  width: 24px;
+  height: 18px;
+  border: 1px solid rgba(23, 34, 27, 0.14);
+  border-radius: 2px;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
 .message {
   margin-bottom: 1rem;
   padding: 1rem;

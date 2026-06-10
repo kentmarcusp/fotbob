@@ -269,6 +269,7 @@ function eventDescription(event) {
     event.minute === null
       ? ""
       : `${event.minute}${event.extraTime ? `+${event.extraTime}` : ""}\u2019`;
+  const team = formatEventTeam(event);
 
   if (event.type === "Substitution") {
     const substitution = [
@@ -278,9 +279,13 @@ function eventDescription(event) {
       .filter(Boolean)
       .join(", ");
 
-    return [minute, event.team, event.type, substitution]
+    return [
+      escapeHtml(minute),
+      team,
+      escapeHtml(event.type),
+      escapeHtml(substitution),
+    ]
       .filter(Boolean)
-      .map(escapeHtml)
       .join(" - ");
   }
 
@@ -290,10 +295,34 @@ function eventDescription(event) {
       : event.player
     : null;
 
-  return [minute, event.team, event.detail || event.type, player]
+  return [
+    escapeHtml(minute),
+    team,
+    escapeHtml(event.detail || event.type),
+    escapeHtml(player),
+  ]
     .filter(Boolean)
-    .map(escapeHtml)
     .join(" - ");
+}
+
+function formatEventTeam(event) {
+  if (!event.team) {
+    return "";
+  }
+
+  const flag = event.teamCountryCode
+    ? `<img
+        class="event-flag"
+        src="https://flagcdn.com/w40/${encodeURIComponent(event.teamCountryCode)}.png"
+        srcset="https://flagcdn.com/w80/${encodeURIComponent(event.teamCountryCode)}.png 2x"
+        width="24"
+        height="18"
+        alt=""
+        loading="lazy"
+      >`
+    : "";
+
+  return `<span class="event-team">${flag}<span>${escapeHtml(event.team)}</span></span>`;
 }
 
 function renderRevealedMatch(match) {

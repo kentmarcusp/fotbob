@@ -35,11 +35,11 @@ function renderFullDetails() {
     <p><strong>Winner:</strong> Argentina</p>
     <h4>Match events</h4>
     <ol class="event-list">
-      <li>12\u2019 - Argentina - Normal Goal - Alex Example</li>
-      <li>34\u2019 - France - Yellow Card - Jordan Sample</li>
-      <li>67\u2019 - Argentina - Penalty Scored - Morgan Demo</li>
-      <li>78\u2019 - France - Goal Cancelled - Taylor Test</li>
-      <li>90+2\u2019 - France - Red Card - Casey Preview</li>
+      <li>12\u2019 - <span class="event-team"><img class="event-flag" src="https://flagcdn.com/w40/ar.png" width="24" height="18" alt="">Argentina</span> - Normal Goal - Alex Example</li>
+      <li>34\u2019 - <span class="event-team"><img class="event-flag" src="https://flagcdn.com/w40/fr.png" width="24" height="18" alt="">France</span> - Yellow Card - Jordan Sample</li>
+      <li>67\u2019 - <span class="event-team"><img class="event-flag" src="https://flagcdn.com/w40/ar.png" width="24" height="18" alt="">Argentina</span> - Penalty Scored - Morgan Demo</li>
+      <li>78\u2019 - <span class="event-team"><img class="event-flag" src="https://flagcdn.com/w40/fr.png" width="24" height="18" alt="">France</span> - Goal Cancelled - Taylor Test</li>
+      <li>90+2\u2019 - <span class="event-team"><img class="event-flag" src="https://flagcdn.com/w40/fr.png" width="24" height="18" alt="">France</span> - Red Card - Casey Preview</li>
     </ol>
     <p class="demo-note">All names and match details on this page are fictional.</p>
   `;

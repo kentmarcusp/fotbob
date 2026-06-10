@@ -90,7 +90,7 @@ test("football-data.org fixtures are mapped into the internal provider shape", a
                     minute: 67,
                     injuryTime: null,
                     type: "PENALTY",
-                    team: { name: "Argentina" },
+                    team: { name: "Argentina", tla: "ARG" },
                     scorer: { name: "Hidden Player" },
                     assist: null,
                   },
@@ -99,7 +99,7 @@ test("football-data.org fixtures are mapped into the internal provider shape", a
                   {
                     minute: 54,
                     card: "YELLOW_RED",
-                    team: { name: "France" },
+                    team: { name: "France", tla: "FRA" },
                     player: { name: "Hidden Player" },
                   },
                 ],
@@ -123,7 +123,9 @@ test("football-data.org fixtures are mapped into the internal provider shape", a
     assert.equal(fixtures[0].teams.homeCountryCode, "fr");
     assert.equal(fixtures[0].teams.awayCountryCode, "ar");
     assert.equal(fixtures[0].events[0].detail, "Penalty Scored");
+    assert.equal(fixtures[0].events[0].teamCountryCode, "ar");
     assert.equal(fixtures[0].events[1].detail, "Second Yellow Card");
+    assert.equal(fixtures[0].events[1].teamCountryCode, "fr");
   } finally {
     axios.create = originalCreate;
 

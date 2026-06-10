@@ -133,6 +133,7 @@ function mapGoal(goal) {
     elapsed: goal.minute ?? null,
     extra: goal.injuryTime ?? null,
     team: goal.team?.name || null,
+    teamCountryCode: teamCountryCode(goal.team),
     player: goal.scorer?.name || null,
     assist: goal.assist?.name || null,
     type: "Goal",
@@ -148,6 +149,7 @@ function mapBooking(booking) {
     elapsed: booking.minute ?? null,
     extra: null,
     team: booking.team?.name || null,
+    teamCountryCode: teamCountryCode(booking.team),
     player: booking.player?.name || null,
     assist: null,
     type: "Card",
@@ -161,6 +163,7 @@ function mapSubstitution(substitution) {
     elapsed: substitution.minute ?? null,
     extra: null,
     team: substitution.team?.name || null,
+    teamCountryCode: teamCountryCode(substitution.team),
     player: substitution.playerOut?.name || null,
     assist: substitution.playerIn?.name || null,
     type: "Substitution",
@@ -174,6 +177,7 @@ function mapPenalty(penalty) {
     elapsed: penalty.minute ?? null,
     extra: penalty.injuryTime ?? null,
     team: penalty.team?.name || null,
+    teamCountryCode: teamCountryCode(penalty.team),
     player: penalty.player?.name || null,
     assist: null,
     type: "Penalty",
@@ -212,7 +216,18 @@ function mapFixtureEvents(match) {
         !goalPenaltyPlayers.has(event.player),
     );
 
-  return [...goals, ...bookings, ...substitutions, ...penalties];
+  const teamCodes = new Map([
+    [teamName(match.homeTeam), teamCountryCode(match.homeTeam)],
+    [teamName(match.awayTeam), teamCountryCode(match.awayTeam)],
+  ]);
+
+  return [...goals, ...bookings, ...substitutions, ...penalties].map(
+    (event) => ({
+      ...event,
+      teamCountryCode:
+        event.teamCountryCode || teamCodes.get(event.team) || null,
+    }),
+  );
 }
 
 function mapWinner(score, homeTeam, awayTeam) {

@@ -114,6 +114,7 @@ function transformFullEvent(event) {
     type: normalizeEventType(event),
     detail: event.detail,
     team: event.team,
+    teamCountryCode: event.teamCountryCode || null,
     player: event.player,
     assist: event.assist,
     comments: event.comments,

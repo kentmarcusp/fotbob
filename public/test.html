@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Interactive demonstration of the spoiler-safe match flow."
+    />
+    <title>Match Display Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero hero--demo">
+      <div class="hero__content">
+        <p class="eyebrow">Interactive demonstration</p>
+        <h1>Test the spoiler flow</h1>
+        <p>
+          This page uses a fictional result. It does not call the football API
+          or change your watched matches.
+        </p>
+      </div>
+    </header>
+
+    <main class="page demo-page">
+      <nav class="demo-nav" aria-label="Demo navigation">
+        <a class="button button--secondary" href="/">Back to matches</a>
+        <button id="reset-demo" class="button button--secondary" type="button">
+          Reset demo
+        </button>
+      </nav>
+
+      <section class="demo-intro">
+        <h2>Example match</h2>
+        <p>
+          Open the safe recap, mark the example watched, then confirm the reveal
+          to see how a completed match is displayed.
+        </p>
+      </section>
+
+      <article class="match-card demo-card">
+        <div class="match-card__meta">
+          <span>Jun 20, 2026, 8:00 PM</span>
+          <span>Finished</span>
+        </div>
+        <h3>
+          <span class="team-name">
+            <img
+              class="country-flag"
+              src="https://flagcdn.com/w40/ar.png"
+              srcset="https://flagcdn.com/w80/ar.png 2x"
+              width="32"
+              height="24"
+              alt=""
+            />
+            <span>Argentina</span>
+          </span>
+          <span class="versus">and</span>
+          <span class="team-name">
+            <img
+              class="country-flag"
+              src="https://flagcdn.com/w40/fr.png"
+              srcset="https://flagcdn.com/w80/fr.png 2x"
+              width="32"
+              height="24"
+              alt=""
+            />
+            <span>France</span>
+          </span>
+        </h3>
+        <p class="venue">Example Stadium</p>
+
+        <button
+          id="demo-recap-button"
+          class="button button--secondary recap-button"
+          type="button"
+        >
+          View spoiler-safe recap
+        </button>
+        <section
+          id="demo-recap"
+          class="event-recap"
+          aria-live="polite"
+          hidden
+        ></section>
+
+        <label class="watch-control">
+          <input id="demo-watched" class="watched-toggle" type="checkbox" />
+          <span id="demo-watched-label">Mark as watched</span>
+        </label>
+
+        <button id="demo-reveal" class="button reveal-button" type="button" hidden>
+          Reveal full details
+        </button>
+        <section id="demo-details" class="revealed" aria-live="polite" hidden></section>
+      </article>
+    </main>
+
+    <dialog id="demo-dialog">
+      <form method="dialog" class="dialog">
+        <p class="eyebrow">Spoiler warning</p>
+        <h2>Reveal the fictional result?</h2>
+        <p>
+          This demonstrates the score, winner, event teams, and player names.
+          Are you sure?
+        </p>
+        <div class="dialog__actions">
+          <button class="button button--secondary" value="cancel">Keep hidden</button>
+          <button class="button button--danger" value="confirm">
+            Reveal demo spoilers
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/demo.js" defer></script>
+  </body>
+</html>

@@ -15,6 +15,10 @@ app.get("/api/health", (request, response) => {
   response.json({ status: "ok" });
 });
 
+app.get("/test", (request, response) => {
+  response.sendFile(path.join(publicDirectory, "test.html"));
+});
+
 app.get("*", (request, response) => {
   response.sendFile(path.join(publicDirectory, "index.html"));
 });

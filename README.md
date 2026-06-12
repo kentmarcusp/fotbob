@@ -13,6 +13,9 @@ The default browser experience receives only backend-sanitized data:
   It does not return scores, winners, penalties, or event data.
 - `GET /api/matches/:fixtureId/events` returns only event minute, extra time,
   and a normalized category such as `Goal`, `Yellow Card`, or `Substitution`.
+- The browser initially renders those events as the neutral label
+  `Event happened`. A separate button at the bottom of the recap reveals the
+  normalized categories.
 - Safe events omit team, player, assist, home/away side, score, comments, and
   provider-specific detail text.
 - Safe recap categories distinguish goals, cards, substitutions, penalties,

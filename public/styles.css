@@ -482,6 +482,17 @@ select {
   color: var(--muted);
 }
 
+.safe-event__badge--hidden {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+
+.reveal-event-types {
+  width: 100%;
+  margin-top: 0.85rem;
+}
+
 .recap-state {
   margin: 0;
   color: var(--muted);

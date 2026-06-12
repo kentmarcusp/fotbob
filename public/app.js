@@ -180,11 +180,12 @@ function createMatchCard(match) {
       );
       const data = await readJsonResponse(response, "Could not load the recap.");
 
-      eventRecap.innerHTML = data.length
-        ? `<ol class="safe-event-list">${data
-            .map((event) => `<li>${formatSafeEvent(event)}</li>`)
-            .join("")}</ol>`
-        : '<p class="recap-state">No spoiler-safe events available for this match yet.</p>';
+      if (data.length) {
+        renderSafeEvents(eventRecap, data, false);
+      } else {
+        eventRecap.innerHTML =
+          '<p class="recap-state">No spoiler-safe events available for this match yet.</p>';
+      }
       recapButton.hidden = true;
     } catch (error) {
       recapButton.disabled = false;
@@ -313,17 +314,51 @@ function formatTeamWithFlag(teamName, countryCode) {
   `;
 }
 
-function formatSafeEvent(event) {
+function renderSafeEvents(container, events, revealCategories) {
+  container.innerHTML = `
+    <ol class="safe-event-list">
+      ${events
+        .map(
+          (event) =>
+            `<li>${formatSafeEvent(event, revealCategories)}</li>`,
+        )
+        .join("")}
+    </ol>
+    ${
+      revealCategories
+        ? ""
+        : `<button class="button button--secondary reveal-event-types" type="button">
+            Reveal event types
+          </button>`
+    }
+  `;
+
+  container
+    .querySelector(".reveal-event-types")
+    ?.addEventListener("click", () => {
+      renderSafeEvents(container, events, true);
+    });
+}
+
+function formatSafeEvent(event, revealCategory) {
   const minute =
     event.minute === null
       ? "Time unavailable"
       : `${event.minute}${event.extraTime ? `+${event.extraTime}` : ""}\u2019`;
-  const eventType = event.type || "Match Event";
+  const eventType = revealCategory
+    ? event.type || "Match Event"
+    : "Event happened";
 
   return `
     <span class="safe-event__minute">${escapeHtml(minute)}</span>
-    <span class="safe-event__badge ${getSafeEventClass(eventType)}">
-      <span class="safe-event__icon" aria-hidden="true">${getSafeEventIcon(eventType)}</span>
+    <span class="safe-event__badge ${
+      revealCategory
+        ? getSafeEventClass(eventType)
+        : "safe-event__badge--hidden"
+    }">
+      <span class="safe-event__icon" aria-hidden="true">${
+        revealCategory ? getSafeEventIcon(eventType) : "·"
+      }</span>
       ${escapeHtml(eventType)}
     </span>
   `;

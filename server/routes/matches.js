@@ -4,6 +4,7 @@ const footballApiClient = require("../services/footballApiClient");
 const {
   sanitizeFixtureEvents,
   sanitizeFixtures,
+  transformFixtureEventDetails,
   transformFixtureFullDetails,
 } = require("../utils/spoilerSanitizer");
 
@@ -29,6 +30,23 @@ router.get("/:fixtureId/events", async (request, response, next) => {
     next(error);
   }
 });
+
+router.get(
+  "/:fixtureId/events/:eventId/details",
+  async (request, response, next) => {
+    try {
+      const event = await footballApiClient.getFixtureEventDetails(
+        request.params.fixtureId,
+        request.params.eventId,
+      );
+
+      response.set("Cache-Control", "no-store");
+      response.json(transformFixtureEventDetails(event));
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 router.get("/:fixtureId/full-details", async (request, response, next) => {
   try {

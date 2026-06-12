@@ -181,7 +181,7 @@ function createMatchCard(match) {
       const data = await readJsonResponse(response, "Could not load the recap.");
 
       if (data.length) {
-        renderSafeEvents(eventRecap, data, false);
+        renderSafeEvents(eventRecap, match.id, data, false);
       } else {
         eventRecap.innerHTML =
           '<p class="recap-state">No spoiler-safe events available for this match yet.</p>';
@@ -314,7 +314,7 @@ function formatTeamWithFlag(teamName, countryCode) {
   `;
 }
 
-function renderSafeEvents(container, events, revealCategories) {
+function renderSafeEvents(container, matchId, events, revealCategories) {
   container.innerHTML = `
     <ol class="safe-event-list">
       ${events
@@ -336,8 +336,16 @@ function renderSafeEvents(container, events, revealCategories) {
   container
     .querySelector(".reveal-event-types")
     ?.addEventListener("click", () => {
-      renderSafeEvents(container, events, true);
+      renderSafeEvents(container, matchId, events, true);
     });
+
+  if (revealCategories) {
+    container.querySelectorAll(".safe-event__trigger").forEach((button) => {
+      button.addEventListener("click", () => {
+        toggleEventDetails(matchId, button);
+      });
+    });
+  }
 }
 
 function formatSafeEvent(event, revealCategory) {
@@ -349,7 +357,7 @@ function formatSafeEvent(event, revealCategory) {
     ? event.type || "Match Event"
     : "Event happened";
 
-  return `
+  const badge = `
     <span class="safe-event__minute">${escapeHtml(minute)}</span>
     <span class="safe-event__badge ${
       revealCategory
@@ -361,6 +369,91 @@ function formatSafeEvent(event, revealCategory) {
       }</span>
       ${escapeHtml(eventType)}
     </span>
+  `;
+
+  if (!revealCategory || !event.id) {
+    return `<div class="safe-event__summary">${badge}</div>`;
+  }
+
+  return `
+    <button
+      class="safe-event__trigger"
+      type="button"
+      data-event-id="${escapeHtml(event.id)}"
+      aria-expanded="false"
+    >
+      ${badge}
+      <span class="safe-event__chevron" aria-hidden="true">+</span>
+    </button>
+    <div class="safe-event__details" hidden></div>
+  `;
+}
+
+async function toggleEventDetails(matchId, button) {
+  const details = button.nextElementSibling;
+  const expanded = button.getAttribute("aria-expanded") === "true";
+
+  if (expanded) {
+    button.setAttribute("aria-expanded", "false");
+    button.querySelector(".safe-event__chevron").textContent = "+";
+    details.hidden = true;
+    return;
+  }
+
+  button.setAttribute("aria-expanded", "true");
+  button.querySelector(".safe-event__chevron").textContent = "\u2212";
+  details.hidden = false;
+
+  if (details.dataset.loaded === "true") return;
+
+  details.innerHTML = '<p class="recap-state">Loading event details...</p>';
+
+  try {
+    const response = await fetch(
+      `/api/matches/${encodeURIComponent(matchId)}/events/${encodeURIComponent(button.dataset.eventId)}/details`,
+    );
+    const event = await readJsonResponse(
+      response,
+      "Could not load event details.",
+    );
+    details.innerHTML = renderEventDetails(event);
+    details.dataset.loaded = "true";
+  } catch (error) {
+    details.innerHTML = `
+      <p class="recap-state recap-state--error">${escapeHtml(error.message)}</p>
+    `;
+  }
+}
+
+function renderEventDetails(event) {
+  const players = Array.isArray(event.players) && event.players.length
+    ? `
+      <dl class="event-detail__players">
+        ${event.players
+          .map(
+            (player) => `
+              <div>
+                <dt>${escapeHtml(player.role || "Player")}</dt>
+                <dd>${escapeHtml(player.name)}</dd>
+              </div>
+            `,
+          )
+          .join("")}
+      </dl>
+    `
+    : "";
+  const situation =
+    event.comments ||
+    event.summary ||
+    "No additional situation description is available.";
+
+  return `
+    <div class="event-detail__header">
+      <strong>${escapeHtml(event.detail || event.type)}</strong>
+      ${event.team ? `<span>${escapeHtml(event.team)}</span>` : ""}
+    </div>
+    ${players}
+    <p class="event-detail__situation">${escapeHtml(situation)}</p>
   `;
 }
 

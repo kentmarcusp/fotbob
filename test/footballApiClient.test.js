@@ -100,6 +100,7 @@ test("ESPN scoreboard fixtures are mapped into the internal provider shape", asy
                     ],
                     details: [
                       {
+                        id: "event-1",
                         type: { type: "goal", text: "Goal" },
                         clock: { displayValue: "9'" },
                         scoringPlay: true,
@@ -132,6 +133,7 @@ test("ESPN scoreboard fixtures are mapped into the internal provider shape", asy
     assert.equal(fixtures[0].teams.homeCountryCode, "mx");
     assert.equal(fixtures[0].teams.awayCountryCode, "za");
     assert.equal(fixtures[0].goals.home, 2);
+    assert.equal(fixtures[0].events[0].id, "event-1");
     assert.equal(fixtures[0].events[0].detail, "Goal");
     assert.equal(fixtures[0].events[0].teamCountryCode, "mx");
   } finally {
@@ -205,7 +207,11 @@ test("ESPN event summaries provide full details and relevant events", async () =
               clock: { displayValue: "" },
             },
             {
+              id: "goal-67",
               type: { type: "goal", text: "Goal - Header" },
+              text: "Scorer headed in a cross from Assistant.",
+              shortText: "Scorer Goal",
+              period: { number: 2 },
               clock: { displayValue: "67'" },
               scoringPlay: true,
               team: { id: "203", displayName: "Mexico" },
@@ -215,7 +221,11 @@ test("ESPN event summaries provide full details and relevant events", async () =
               ],
             },
             {
+              id: "card-92",
               type: { type: "red-card", text: "Red Card" },
+              text: "Booked Player was shown a red card.",
+              shortText: "Booked Player Red Card",
+              period: { number: 2 },
               clock: { displayValue: "90'+2'" },
               team: { id: "467", displayName: "South Africa" },
               participants: [
@@ -239,8 +249,17 @@ test("ESPN event summaries provide full details and relevant events", async () =
     assert.equal(fixture.venue, "Example Stadium");
     assert.equal(fixture.city, "Example City");
     assert.equal(fixture.events.length, 2);
+    assert.equal(fixture.events[0].id, "goal-67");
     assert.equal(fixture.events[0].type, "Goal");
     assert.equal(fixture.events[0].assist, "Assistant");
+    assert.deepEqual(fixture.events[0].players, [
+      { id: null, name: "Scorer", role: "Scorer" },
+      { id: null, name: "Assistant", role: "Assist" },
+    ]);
+    assert.equal(
+      fixture.events[0].comments,
+      "Scorer headed in a cross from Assistant.",
+    );
     assert.equal(fixture.events[1].type, "Card");
     assert.equal(fixture.events[1].elapsed, 90);
     assert.equal(fixture.events[1].extra, 2);

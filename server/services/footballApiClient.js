@@ -194,15 +194,40 @@ function mapEvent(event, competitorsByTeamId) {
   else if (eventType.includes("penalty")) type = "Penalty";
   else if (eventType.includes("var")) type = "VAR";
 
+  const players = participants
+    .map((participant, index) => {
+      const name = participant?.athlete?.displayName;
+      if (!name) return null;
+
+      let role = "Involved player";
+      if (isSubstitution) role = index === 0 ? "Player on" : "Player off";
+      else if (type === "Goal") role = index === 0 ? "Scorer" : "Assist";
+      else if (type === "Card") role = "Carded player";
+      else if (type === "Penalty") role = index === 0 ? "Penalty taker" : role;
+
+      return {
+        id: participant?.athlete?.id
+          ? String(participant.athlete.id)
+          : null,
+        name,
+        role,
+      };
+    })
+    .filter(Boolean);
+
   return {
+    id: event?.id ? String(event.id) : null,
     elapsed,
     extra,
+    period: event?.period?.number ?? null,
     team: event?.team?.displayName || teamName(competitor) || null,
     teamCountryCode: teamCountryCode(competitor),
     player,
     assist: secondPlayer,
+    players,
     type,
     detail: eventText,
+    shortText: event?.shortText || null,
     comments: event?.text || null,
   };
 }
@@ -375,7 +400,21 @@ async function getFixtureEvents(fixtureId) {
   return fixture.events;
 }
 
+async function getFixtureEventDetails(fixtureId, eventId) {
+  const fixture = await getFixtureFullDetails(fixtureId);
+  const event = fixture.events.find(
+    (fixtureEvent) => fixtureEvent.id === String(eventId),
+  );
+
+  if (!event) {
+    throw createHttpError("Match event not found.", 404);
+  }
+
+  return event;
+}
+
 module.exports = {
+  getFixtureEventDetails,
   getFixtureEvents,
   getFixtureFullDetails,
   getWorldCupFixtures,

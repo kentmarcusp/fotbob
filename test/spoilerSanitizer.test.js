@@ -84,15 +84,16 @@ test("safe events keep only time and a normalized event category", () => {
       },
     ]),
     [
-      { minute: 23, extraTime: null, type: "Goal" },
-      { minute: 34, extraTime: null, type: "Yellow Card" },
-      { minute: 46, extraTime: null, type: "Substitution" },
+      { id: null, minute: 23, extraTime: null, type: "Goal" },
+      { id: null, minute: 34, extraTime: null, type: "Yellow Card" },
+      { id: null, minute: 46, extraTime: null, type: "Substitution" },
       {
+        id: null,
         minute: 72,
         extraTime: null,
         type: "Disallowed Goal / VAR Check",
       },
-      { minute: 90, extraTime: 2, type: "Red Card" },
+      { id: null, minute: 90, extraTime: 2, type: "Red Card" },
     ],
   );
 });
@@ -124,6 +125,7 @@ test("safe recap normalizes provider events without identifying participants", (
   assert.deepEqual(
     sanitizeFixtureEvents(events),
     cases.map(([, , type], index) => ({
+      id: null,
       minute: index + 1,
       extraTime: null,
       type,
@@ -140,7 +142,7 @@ test("unknown provider event details are not passed through", () => {
         detail: "Argentina benefited from this event",
       },
     ]),
-    [{ minute: 12, extraTime: null, type: "Match Event" }],
+    [{ id: null, minute: 12, extraTime: null, type: "Match Event" }],
   );
 });
 
@@ -161,14 +163,18 @@ test("full details transform contains spoilers only for the dedicated endpoint",
     penalties: { home: null, away: null },
     events: [
       {
+        id: null,
         minute: 23,
         extraTime: undefined,
+        period: null,
         type: "Goal",
         detail: "Normal Goal",
         team: "Argentina",
         teamCountryCode: "ar",
         player: "Private Player",
         assist: undefined,
+        players: [],
+        summary: null,
         comments: undefined,
       },
     ],

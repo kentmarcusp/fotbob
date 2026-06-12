@@ -406,15 +406,96 @@ select {
 }
 
 .safe-event-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  padding: 0.6rem 0.7rem;
+  min-width: 0;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 7px;
   color: var(--muted);
   font-size: 0.75rem;
+  overflow: hidden;
+}
+
+.safe-event-list li:has(.safe-event__trigger[aria-expanded="true"]) {
+  grid-column: 1 / -1;
+}
+
+.safe-event__summary,
+.safe-event__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.6rem 0.7rem;
+}
+
+.safe-event__trigger {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.safe-event__trigger:hover,
+.safe-event__trigger[aria-expanded="true"] {
+  background: var(--card-raised);
+}
+
+.safe-event__chevron {
+  color: var(--grass);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.safe-event__details {
+  padding: 0.85rem;
+  border-top: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.event-detail__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--ink);
+}
+
+.event-detail__header span {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.event-detail__players {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.75rem 0 0;
+}
+
+.event-detail__players div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.event-detail__players dt {
+  color: var(--muted);
+}
+
+.event-detail__players dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: right;
+}
+
+.event-detail__situation {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .safe-event__minute {

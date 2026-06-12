@@ -51,6 +51,7 @@ function normalizeEventType(event) {
 
 function sanitizeFixtureEvent(event) {
   return {
+    id: event?.id || null,
     minute: event?.time?.elapsed ?? event?.elapsed ?? null,
     extraTime: event?.time?.extra ?? event?.extra ?? null,
     type: normalizeEventType(event),
@@ -109,16 +110,24 @@ function getFixtureWinner(fixture) {
 
 function transformFullEvent(event) {
   return {
+    id: event.id || null,
     minute: event.elapsed,
     extraTime: event.extra,
+    period: event.period ?? null,
     type: normalizeEventType(event),
     detail: event.detail,
     team: event.team,
     teamCountryCode: event.teamCountryCode || null,
     player: event.player,
     assist: event.assist,
+    players: Array.isArray(event.players) ? event.players : [],
+    summary: event.shortText || null,
     comments: event.comments,
   };
+}
+
+function transformFixtureEventDetails(event) {
+  return transformFullEvent(event);
 }
 
 function transformFixtureFullDetails(fixture) {
@@ -158,5 +167,6 @@ module.exports = {
   sanitizeFixtureEvent,
   sanitizeFixtureEvents,
   sanitizeFixtures,
+  transformFixtureEventDetails,
   transformFixtureFullDetails,
 };

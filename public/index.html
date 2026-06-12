@@ -13,20 +13,31 @@
   <body>
     <header class="hero">
       <div class="hero__content">
-        <p class="eyebrow">Spoiler-safe match guide</p>
-        <h1>World Cup, without the result</h1>
+        <p class="eyebrow">Spoiler-free</p>
+        <h1>World Cup Tracker</h1>
         <p>
-          See who played and when. Scores, outcomes, players, and team-specific
-          events stay hidden until you mark a match watched and confirm.
+          Every match, no surprises. Results stay hidden until you choose how
+          much to see, match by match.
         </p>
       </div>
     </header>
 
     <main class="page">
       <section class="toolbar" aria-label="Match controls">
-        <div>
+        <div class="toolbar__intro">
           <h2>Matches</h2>
           <p id="summary">Loading fixtures...</p>
+          <div class="status-filter" aria-label="Filter by match status">
+            <button class="status-filter__button is-active" type="button" data-status="all" aria-pressed="true">
+              All
+            </button>
+            <button class="status-filter__button" type="button" data-status="upcoming" aria-pressed="false">
+              Upcoming
+            </button>
+            <button class="status-filter__button" type="button" data-status="finished" aria-pressed="false">
+              Finished
+            </button>
+          </div>
         </div>
         <div class="toolbar__actions">
           <label class="date-filter">
@@ -42,7 +53,7 @@
       </section>
 
       <div id="message" class="message" role="status" hidden></div>
-      <section id="matches" class="match-grid" aria-live="polite"></section>
+      <div id="matches" class="match-list" aria-live="polite"></div>
     </main>
 
     <dialog id="spoiler-dialog">

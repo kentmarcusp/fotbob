@@ -4,10 +4,14 @@ const message = document.querySelector("#message");
 const refreshButton = document.querySelector("#refresh-button");
 const dateFilter = document.querySelector("#date-filter");
 const spoilerDialog = document.querySelector("#spoiler-dialog");
+const statusFilterButtons = document.querySelectorAll(
+  ".status-filter__button",
+);
 
 const watchedStorageKey = "world-cup-watched-matches";
 let pendingRevealId = null;
 let matches = [];
+let selectedStatus = "all";
 
 function getWatchedMatchIds() {
   try {
@@ -40,6 +44,19 @@ function formatKickoff(kickoff) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
+  }).format(kickoffDate);
+}
+
+function formatKickoffTime(kickoff) {
+  const kickoffDate = new Date(kickoff);
+
+  if (Number.isNaN(kickoffDate.getTime())) {
+    return "Time unavailable";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
   }).format(kickoffDate);
 }
 
@@ -99,26 +116,30 @@ function createMatchCard(match) {
 
   card.innerHTML = `
     <div class="match-card__meta">
-      <span>${escapeHtml(formatKickoff(match.kickoffTime))}</span>
-      <span>${escapeHtml(match.status || "Status unavailable")}</span>
+      <span class="status-badge">${escapeHtml(match.status || "Status unavailable")}</span>
+      <span class="kickoff-time">${escapeHtml(formatKickoffTime(match.kickoffTime))}</span>
     </div>
-    <h3>
-      ${formatTeamWithFlag(match.homeTeam, match.homeTeamCountryCode)}
-      <span class="versus">and</span>
-      ${formatTeamWithFlag(match.awayTeam, match.awayTeamCountryCode)}
-    </h3>
-    <p class="venue">${escapeHtml(match.venue || "Venue to be announced")}</p>
-    <button class="button button--secondary recap-button" type="button">
-      View spoiler-safe recap
-    </button>
+    <div class="match-card__main">
+      <div class="matchup">
+        ${formatTeamWithFlag(match.homeTeam, match.homeTeamCountryCode)}
+        <span class="versus">vs</span>
+        ${formatTeamWithFlag(match.awayTeam, match.awayTeamCountryCode)}
+      </div>
+      <p class="venue">${escapeHtml(match.venue || "Venue to be announced")}</p>
+    </div>
+    <div class="match-card__actions">
+      <button class="button button--secondary recap-button" type="button">
+        Safe recap
+      </button>
+      <label class="watch-control">
+        <input class="watched-toggle" type="checkbox" ${watched ? "checked" : ""}>
+        <span class="watched-label">${watched ? "Watched" : "Mark watched"}</span>
+      </label>
+      <button class="button reveal-button" type="button" ${watched ? "" : "hidden"}>
+        Reveal result
+      </button>
+    </div>
     <section class="event-recap" aria-live="polite" hidden></section>
-    <label class="watch-control">
-      <input class="watched-toggle" type="checkbox" ${watched ? "checked" : ""}>
-      <span class="watched-label">${watched ? "Unmark as watched" : "Mark as watched"}</span>
-    </label>
-    <button class="button reveal-button" type="button" ${watched ? "" : "hidden"}>
-      Reveal full details
-    </button>
     <div class="revealed" hidden></div>
   `;
 
@@ -132,8 +153,8 @@ function createMatchCard(match) {
   watchedToggle.addEventListener("change", () => {
     toggleWatchedMatch(match.id, watchedToggle.checked);
     watchedLabel.textContent = watchedToggle.checked
-      ? "Unmark as watched"
-      : "Mark as watched";
+      ? "Watched"
+      : "Mark watched";
     revealButton.hidden = !watchedToggle.checked;
 
     if (!watchedToggle.checked) {
@@ -203,12 +224,17 @@ function populateDateFilter(fixtures) {
 
 function renderMatches() {
   const selectedDate = dateFilter.value;
-  const visibleMatches =
+  const dateMatches =
     selectedDate === "all"
       ? matches
       : matches.filter(
           (match) => getLocalDateKey(match.kickoffTime) === selectedDate,
         );
+  const visibleMatches = dateMatches.filter((match) => {
+    if (selectedStatus === "all") return true;
+    const isFinished = String(match.status).toLowerCase().includes("full time");
+    return selectedStatus === "finished" ? isFinished : !isFinished;
+  });
 
   matchesContainer.replaceChildren();
 
@@ -219,13 +245,45 @@ function renderMatches() {
     return;
   }
 
+  const groups = new Map();
+  visibleMatches.forEach((match) => {
+    const dateKey = getLocalDateKey(match.kickoffTime) || "unknown";
+    if (!groups.has(dateKey)) groups.set(dateKey, []);
+    groups.get(dateKey).push(match);
+  });
+
   const fragment = document.createDocumentFragment();
-  visibleMatches.forEach((match) => fragment.append(createMatchCard(match)));
+  groups.forEach((groupMatches) => {
+    const group = document.createElement("section");
+    group.className = "match-day";
+    const heading = document.createElement("h3");
+    heading.className = "match-day__heading";
+    heading.innerHTML = `
+      <span>${escapeHtml(formatGroupDate(groupMatches[0].kickoffTime))}</span>
+      <span class="match-day__line" aria-hidden="true"></span>
+    `;
+    const rows = document.createElement("div");
+    rows.className = "match-day__rows";
+    groupMatches.forEach((match) => rows.append(createMatchCard(match)));
+    group.append(heading, rows);
+    fragment.append(group);
+  });
   matchesContainer.append(fragment);
   summary.textContent =
     selectedDate === "all"
       ? `${visibleMatches.length} spoiler-safe matches`
       : `${visibleMatches.length} matches on ${dateFilter.selectedOptions[0].textContent}`;
+}
+
+function formatGroupDate(kickoff) {
+  const date = new Date(kickoff);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(date);
 }
 
 function escapeHtml(value) {
@@ -449,4 +507,15 @@ spoilerDialog.addEventListener("close", async () => {
 
 dateFilter.addEventListener("change", renderMatches);
 refreshButton.addEventListener("click", loadMatches);
+statusFilterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedStatus = button.dataset.status;
+    statusFilterButtons.forEach((filterButton) => {
+      const active = filterButton === button;
+      filterButton.classList.toggle("is-active", active);
+      filterButton.setAttribute("aria-pressed", String(active));
+    });
+    renderMatches();
+  });
+});
 loadMatches();

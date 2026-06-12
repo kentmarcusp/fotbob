@@ -12,12 +12,11 @@ The default browser experience receives only backend-sanitized data:
 - `GET /api/matches` returns neutral team names, kickoff time, status, and venue.
   It does not return scores, winners, penalties, or event data.
 - `GET /api/matches/:fixtureId/events` returns only event minute, extra time,
-  and the neutral label `Event happened`.
+  and a normalized category such as `Goal`, `Yellow Card`, or `Substitution`.
 - Safe events omit team, player, assist, home/away side, score, comments, and
   provider-specific detail text.
-- Goals, cards, substitutions, penalties, and VAR events all appear only as
-  `Event happened`. The safe recap does not reveal what happened or who
-  benefited.
+- Safe recap categories distinguish goals, cards, substitutions, penalties,
+  and VAR without revealing the team, player, score, or who benefited.
 - Teams on the match list are alphabetized to avoid implying home/away roles.
 - Unknown provider event types become the neutral label `Match Event`.
 - Raw ESPN responses are mapped to internal objects and are never passed

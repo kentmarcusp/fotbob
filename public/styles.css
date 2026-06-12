@@ -406,12 +406,80 @@ select {
 }
 
 .safe-event-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--line);
   border-radius: 7px;
   color: var(--muted);
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.75rem;
+}
+
+.safe-event__minute {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.safe-event__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.safe-event__icon {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.safe-event__badge--goal {
+  border-color: rgba(143, 227, 136, 0.32);
+  background: rgba(143, 227, 136, 0.09);
+  color: var(--grass);
+}
+
+.safe-event__badge--yellow {
+  border-color: rgba(243, 207, 121, 0.34);
+  background: rgba(243, 207, 121, 0.09);
+  color: var(--warning);
+}
+
+.safe-event__badge--red {
+  border-color: rgba(239, 124, 121, 0.38);
+  background: rgba(239, 124, 121, 0.1);
+  color: var(--danger);
+}
+
+.safe-event__badge--substitution {
+  border-color: rgba(125, 187, 255, 0.34);
+  background: rgba(125, 187, 255, 0.09);
+  color: #8fc5ff;
+}
+
+.safe-event__badge--penalty {
+  border-color: rgba(208, 151, 255, 0.38);
+  background: rgba(208, 151, 255, 0.1);
+  color: #d7a7ff;
+}
+
+.safe-event__badge--var {
+  border-color: rgba(92, 216, 205, 0.34);
+  background: rgba(92, 216, 205, 0.09);
+  color: #74dcd3;
+}
+
+.safe-event__badge--default {
+  color: var(--muted);
 }
 
 .recap-state {

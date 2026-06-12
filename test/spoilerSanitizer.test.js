@@ -53,7 +53,7 @@ test("match list contains only the spoiler-safe contract", () => {
   ]);
 });
 
-test("safe events keep only time and a neutral event label", () => {
+test("safe events keep only time and a normalized event category", () => {
   assert.deepEqual(
     sanitizeFixtureEvents([
       rawMatch.events[0],
@@ -84,16 +84,20 @@ test("safe events keep only time and a neutral event label", () => {
       },
     ]),
     [
-      { minute: 23, extraTime: null, type: "Event happened" },
-      { minute: 34, extraTime: null, type: "Event happened" },
-      { minute: 46, extraTime: null, type: "Event happened" },
-      { minute: 72, extraTime: null, type: "Event happened" },
-      { minute: 90, extraTime: 2, type: "Event happened" },
+      { minute: 23, extraTime: null, type: "Goal" },
+      { minute: 34, extraTime: null, type: "Yellow Card" },
+      { minute: 46, extraTime: null, type: "Substitution" },
+      {
+        minute: 72,
+        extraTime: null,
+        type: "Disallowed Goal / VAR Check",
+      },
+      { minute: 90, extraTime: 2, type: "Red Card" },
     ],
   );
 });
 
-test("safe recap hides every provider event type", () => {
+test("safe recap normalizes provider events without identifying participants", () => {
   const cases = [
     ["Goal", "Normal Goal", "Goal"],
     ["Goal", "Own Goal", "Goal"],
@@ -119,10 +123,10 @@ test("safe recap hides every provider event type", () => {
 
   assert.deepEqual(
     sanitizeFixtureEvents(events),
-    cases.map(([, , _type], index) => ({
+    cases.map(([, , type], index) => ({
       minute: index + 1,
       extraTime: null,
-      type: "Event happened",
+      type,
     })),
   );
 });
@@ -136,7 +140,7 @@ test("unknown provider event details are not passed through", () => {
         detail: "Argentina benefited from this event",
       },
     ]),
-    [{ minute: 12, extraTime: null, type: "Event happened" }],
+    [{ minute: 12, extraTime: null, type: "Match Event" }],
   );
 });
 

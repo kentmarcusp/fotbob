@@ -318,8 +318,38 @@ function formatSafeEvent(event) {
     event.minute === null
       ? "Time unavailable"
       : `${event.minute}${event.extraTime ? `+${event.extraTime}` : ""}\u2019`;
+  const eventType = event.type || "Match Event";
 
-  return `${escapeHtml(minute)} ${escapeHtml(event.type)}`;
+  return `
+    <span class="safe-event__minute">${escapeHtml(minute)}</span>
+    <span class="safe-event__badge ${getSafeEventClass(eventType)}">
+      <span class="safe-event__icon" aria-hidden="true">${getSafeEventIcon(eventType)}</span>
+      ${escapeHtml(eventType)}
+    </span>
+  `;
+}
+
+function getSafeEventClass(eventType) {
+  const type = String(eventType).toLowerCase();
+
+  if (type === "goal") return "safe-event__badge--goal";
+  if (type === "yellow card") return "safe-event__badge--yellow";
+  if (type === "red card") return "safe-event__badge--red";
+  if (type === "substitution") return "safe-event__badge--substitution";
+  if (type === "penalty") return "safe-event__badge--penalty";
+  if (type.includes("var")) return "safe-event__badge--var";
+  return "safe-event__badge--default";
+}
+
+function getSafeEventIcon(eventType) {
+  const type = String(eventType).toLowerCase();
+
+  if (type === "goal") return "●";
+  if (type === "yellow card" || type === "red card") return "■";
+  if (type === "substitution") return "↕";
+  if (type === "penalty") return "P";
+  if (type.includes("var")) return "V";
+  return "·";
 }
 
 function eventDescription(event) {

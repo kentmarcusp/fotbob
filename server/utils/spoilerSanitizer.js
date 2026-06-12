@@ -53,7 +53,7 @@ function sanitizeFixtureEvent(event) {
   return {
     minute: event?.time?.elapsed ?? event?.elapsed ?? null,
     extraTime: event?.time?.extra ?? event?.extra ?? null,
-    type: "Event happened",
+    type: normalizeEventType(event),
   };
 }
 

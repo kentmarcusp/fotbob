@@ -9,8 +9,9 @@ This project is prepared for Vercel's native Express support:
 - `vercel.json` configures the function and baseline response headers.
 - `.env` and `.vercel/` are excluded from Git.
 
-Vercel runs the Express application as one Vercel Function. The football-data.org key
-stays in Vercel environment variables and is never included in browser assets.
+Vercel runs the Express application as one Vercel Function. ESPN requests are
+made by the backend, and raw provider responses are never passed directly to
+the spoiler-safe browser endpoints.
 
 ## First deployment
 
@@ -26,17 +27,11 @@ From this directory, link or create the Vercel project:
 vercel link
 ```
 
-Add the required secret to Production, Preview, and Development when prompted:
-
-```powershell
-vercel env add FOOTBALL_API_KEY
-```
-
 Add or confirm the non-secret configuration:
 
 ```powershell
-vercel env add FOOTBALL_API_BASE_URL
-vercel env add WORLD_CUP_COMPETITION_CODE
+vercel env add ESPN_API_BASE_URL
+vercel env add ESPN_WORLD_CUP_LEAGUE
 vercel env add WORLD_CUP_SEASON
 vercel env add SPOILER_SAFE_MODE
 ```
@@ -44,8 +39,8 @@ vercel env add SPOILER_SAFE_MODE
 Recommended values:
 
 ```env
-FOOTBALL_API_BASE_URL=https://api.football-data.org/v4
-WORLD_CUP_COMPETITION_CODE=WC
+ESPN_API_BASE_URL=https://site.api.espn.com/apis/site/v2/sports/soccer
+ESPN_WORLD_CUP_LEAGUE=fifa.world
 WORLD_CUP_SEASON=2026
 SPOILER_SAFE_MODE=true
 ```
@@ -95,7 +90,8 @@ npm run dev
 
 ## Operational notes
 
-- football-data.org rate limits still apply to serverless requests.
+- ESPN's unofficial endpoint availability and rate limits still apply to
+  serverless requests.
 - Full details are never prefetched and responses use `Cache-Control: no-store`.
 - Browser watched state remains in `localStorage`; Vercel stores no user state.
 - There is no database or persistent filesystem requirement.

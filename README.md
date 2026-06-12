@@ -2,7 +2,8 @@
 
 A small Node.js application for browsing World Cup fixtures and match events
 without accidentally seeing results. Express serves a plain HTML, CSS, and
-JavaScript frontend and retrieves football data through football-data.org.
+JavaScript frontend and retrieves football data through ESPN's unofficial
+public soccer endpoints.
 
 ## Spoiler-safe design
 
@@ -19,7 +20,7 @@ The default browser experience receives only backend-sanitized data:
   benefited.
 - Teams on the match list are alphabetized to avoid implying home/away roles.
 - Unknown provider event types become the neutral label `Match Event`.
-- Raw football-data.org responses are mapped to internal objects and are never passed
+- Raw ESPN responses are mapped to internal objects and are never passed
   directly to spoiler-safe endpoints.
 
 Spoiler-containing data is isolated in
@@ -44,7 +45,6 @@ directly calls the full-details endpoint can receive spoilers.
 ## Requirements
 
 - Node.js 18 or newer
-- A football-data.org API key with FIFA World Cup coverage
 
 ## Setup
 
@@ -54,26 +54,23 @@ directly calls the full-details endpoint can receive spoilers.
    npm install
    ```
 
-2. Copy `.env.example` to `.env`.
-
-3. Add your provider API key and review the tournament configuration:
+2. Copy `.env.example` to `.env` and review the tournament configuration:
 
    ```env
-   FOOTBALL_API_BASE_URL=https://api.football-data.org/v4
-   FOOTBALL_API_KEY=your_key_here
-   WORLD_CUP_COMPETITION_CODE=WC
+   ESPN_API_BASE_URL=https://site.api.espn.com/apis/site/v2/sports/soccer
+   ESPN_WORLD_CUP_LEAGUE=fifa.world
    WORLD_CUP_SEASON=2026
    SPOILER_SAFE_MODE=true
    PORT=3000
    ```
 
-4. Start the development server:
+3. Start the development server:
 
    ```bash
    npm run dev
    ```
 
-5. Open `http://localhost:3000`.
+4. Open `http://localhost:3000`.
 
 For a normal server process without automatic restarts, run:
 
@@ -98,33 +95,26 @@ instructions.
 
 | Variable | Purpose |
 | --- | --- |
-| `FOOTBALL_API_BASE_URL` | Provider base URL. Defaults to football-data.org v4. |
-| `FOOTBALL_API_KEY` | Required football-data.org token sent only by the backend. |
-| `WORLD_CUP_COMPETITION_CODE` | Provider competition code. Defaults to `WC`. |
+| `ESPN_API_BASE_URL` | ESPN soccer API base URL. |
+| `ESPN_WORLD_CUP_LEAGUE` | ESPN league slug. Defaults to `fifa.world`. |
 | `WORLD_CUP_SEASON` | Provider season value. Defaults to `2026`. |
 | `SPOILER_SAFE_MODE` | Reserved configuration flag. Safe endpoints remain sanitized regardless of its value. |
 | `PORT` | Local Express port. Defaults to `3000`. |
 
-If the API key is missing, fixture endpoints return a clear `503` error. Provider
-network failures and unexpected provider response shapes return `502` errors.
+Provider network failures and unexpected response shapes return `502` errors.
 
 ## API provider notes
 
 All provider-specific URLs, headers, and response mapping live in
 `server/services/footballApiClient.js`. The current implementation uses:
 
-- `/competitions/WC/matches?season=...`
-- `/matches/{fixtureId}`
+- `/{league}/scoreboard?dates={season}&limit=1000`
+- `/{league}/summary?event={fixtureId}`
 
-football-data.org plans, rate limits, competition coverage, historical coverage,
-and event availability can change. Scheduled fixtures commonly have no events
-yet; the UI treats that as a normal empty recap.
-
-football-data.org exposes goals, bookings, substitutions, and penalties in match
-details. Its public v4 documentation does not define a dedicated VAR or
-disallowed-goal event feed, so those events are shown only if the provider adds
-an identifiable event in future. Some shootout penalties may not include a
-minute and are displayed with an unavailable time.
+These ESPN endpoints are public but unofficial and undocumented. Their URLs,
+response fields, availability, and rate limits may change without notice.
+Scheduled fixtures commonly have no events yet; the UI treats that as a normal
+empty recap. Event coverage depends on what ESPN supplies for each match.
 
 ## Project structure
 

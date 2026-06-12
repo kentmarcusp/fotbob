@@ -7,20 +7,13 @@ function createHttpError(message, status) {
 }
 
 function getProviderConfiguration() {
-  const baseURL =
-    process.env.FOOTBALL_API_BASE_URL || "https://api.football-data.org/v4";
-  const apiKey = process.env.FOOTBALL_API_KEY;
-  const competitionCode = process.env.WORLD_CUP_COMPETITION_CODE || "WC";
-  const season = process.env.WORLD_CUP_SEASON || "2026";
-
-  if (!apiKey) {
-    throw createHttpError(
-      "FOOTBALL_API_KEY is missing. Add it to your .env file.",
-      503,
-    );
-  }
-
-  return { apiKey, baseURL, competitionCode, season };
+  return {
+    baseURL:
+      process.env.ESPN_API_BASE_URL ||
+      "https://site.api.espn.com/apis/site/v2/sports/soccer",
+    league: process.env.ESPN_WORLD_CUP_LEAGUE || "fifa.world",
+    season: process.env.WORLD_CUP_SEASON || "2026",
+  };
 }
 
 function createClient(configuration) {
@@ -28,7 +21,8 @@ function createClient(configuration) {
     baseURL: configuration.baseURL,
     timeout: 10000,
     headers: {
-      "X-Auth-Token": configuration.apiKey,
+      Accept: "application/json",
+      "User-Agent": "world-cup-spoiler-safe/1.0",
     },
   });
 }
@@ -36,16 +30,12 @@ function createClient(configuration) {
 function requireArray(value, resourceName) {
   if (!Array.isArray(value)) {
     throw createHttpError(
-      `The football data provider returned an unexpected ${resourceName} response.`,
+      `ESPN returned an unexpected ${resourceName} response.`,
       502,
     );
   }
 
   return value;
-}
-
-function teamName(team) {
-  return team?.name || team?.shortName || team?.tla || "TBD";
 }
 
 const fifaToIsoCountryCode = {
@@ -93,9 +83,9 @@ const fifaToIsoCountryCode = {
   POR: "pt",
   QAT: "qa",
   KSA: "sa",
+  RSA: "za",
   SCO: "gb-sct",
   SEN: "sn",
-  RSA: "za",
   SUI: "ch",
   SWE: "se",
   TUN: "tn",
@@ -107,185 +97,197 @@ const fifaToIsoCountryCode = {
   WAL: "gb-wls",
 };
 
-function teamCountryCode(team) {
-  const tla = String(team?.tla || "").toUpperCase();
-  return fifaToIsoCountryCode[tla] || null;
+function teamName(competitor) {
+  return (
+    competitor?.team?.displayName ||
+    competitor?.team?.shortDisplayName ||
+    competitor?.team?.name ||
+    "TBD"
+  );
+}
+
+function teamCountryCode(competitor) {
+  const abbreviation = String(
+    competitor?.team?.abbreviation || "",
+  ).toUpperCase();
+  return fifaToIsoCountryCode[abbreviation] || null;
+}
+
+function findCompetitor(competition, homeAway) {
+  return requireArray(
+    competition?.competitors,
+    "fixture competitors",
+  ).find((competitor) => competitor.homeAway === homeAway);
+}
+
+function parseScore(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const score = Number(value);
+  return Number.isFinite(score) ? score : null;
 }
 
 function mapStatus(status) {
-  const statusLabels = {
-    SCHEDULED: "Scheduled",
-    TIMED: "Scheduled",
-    IN_PLAY: "In Play",
-    PAUSED: "Paused",
-    FINISHED: "Finished",
-    SUSPENDED: "Suspended",
-    POSTPONED: "Postponed",
-    CANCELLED: "Cancelled",
-    AWARDED: "Awarded",
-  };
-
-  return statusLabels[status] || status || "Status unavailable";
-}
-
-function mapGoal(goal) {
   return {
-    elapsed: goal.minute ?? null,
-    extra: goal.injuryTime ?? null,
-    team: goal.team?.name || null,
-    teamCountryCode: teamCountryCode(goal.team),
-    player: goal.scorer?.name || null,
-    assist: goal.assist?.name || null,
-    type: "Goal",
-    detail: goal.type === "PENALTY" ? "Penalty Scored" : goal.type,
-    comments: null,
+    short: status?.type?.name || null,
+    long:
+      status?.type?.description ||
+      status?.type?.detail ||
+      status?.type?.shortDetail ||
+      "Status unavailable",
   };
 }
 
-function mapBooking(booking) {
-  const card = String(booking.card || "").toUpperCase();
-
-  return {
-    elapsed: booking.minute ?? null,
-    extra: null,
-    team: booking.team?.name || null,
-    teamCountryCode: teamCountryCode(booking.team),
-    player: booking.player?.name || null,
-    assist: null,
-    type: "Card",
-    detail: card === "YELLOW_RED" ? "Second Yellow Card" : `${card} Card`,
-    comments: null,
-  };
-}
-
-function mapSubstitution(substitution) {
-  return {
-    elapsed: substitution.minute ?? null,
-    extra: null,
-    team: substitution.team?.name || null,
-    teamCountryCode: teamCountryCode(substitution.team),
-    player: substitution.playerOut?.name || null,
-    assist: substitution.playerIn?.name || null,
-    type: "Substitution",
-    detail: "Substitution",
-    comments: null,
-  };
-}
-
-function mapPenalty(penalty) {
-  return {
-    elapsed: penalty.minute ?? null,
-    extra: penalty.injuryTime ?? null,
-    team: penalty.team?.name || null,
-    teamCountryCode: teamCountryCode(penalty.team),
-    player: penalty.player?.name || null,
-    assist: null,
-    type: "Penalty",
-    detail:
-      penalty.scored === true
-        ? "Penalty Scored"
-        : penalty.scored === false
-          ? "Penalty Missed"
-          : "Penalty",
-    comments: null,
-  };
-}
-
-function mapFixtureEvents(match) {
-  const goals = requireArray(match.goals || [], "fixture goals").map(mapGoal);
-  const bookings = requireArray(
-    match.bookings || [],
-    "fixture bookings",
-  ).map(mapBooking);
-  const substitutions = requireArray(
-    match.substitutions || [],
-    "fixture substitutions",
-  ).map(mapSubstitution);
-
-  const goalPenaltyPlayers = new Set(
-    goals
-      .filter((event) => event.detail === "Penalty Scored")
-      .map((event) => event.player)
-      .filter(Boolean),
-  );
-  const penalties = requireArray(match.penalties || [], "fixture penalties")
-    .map(mapPenalty)
-    .filter(
-      (event) =>
-        event.elapsed !== null ||
-        !goalPenaltyPlayers.has(event.player),
-    );
-
-  const teamCodes = new Map([
-    [teamName(match.homeTeam), teamCountryCode(match.homeTeam)],
-    [teamName(match.awayTeam), teamCountryCode(match.awayTeam)],
-  ]);
-
-  return [...goals, ...bookings, ...substitutions, ...penalties].map(
-    (event) => ({
-      ...event,
-      teamCountryCode:
-        event.teamCountryCode || teamCodes.get(event.team) || null,
-    }),
+function mapStage(event, competition) {
+  return (
+    competition?.groups?.abbreviation ||
+    event?.season?.slug?.replaceAll("-", " ") ||
+    null
   );
 }
 
-function mapWinner(score, homeTeam, awayTeam) {
-  if (score?.winner === "HOME_TEAM") {
-    return { homeWinner: true, awayWinner: false };
-  }
-
-  if (score?.winner === "AWAY_TEAM") {
-    return { homeWinner: false, awayWinner: true };
-  }
-
-  return { homeWinner: false, awayWinner: false };
+function mapCompetition(event, competition, league) {
+  return {
+    name: league?.name || "FIFA World Cup",
+    round: mapStage(event, competition),
+    season: event?.season?.year ? String(event.season.year) : null,
+  };
 }
 
-function mapFixture(match) {
-  if (!match?.id || !match?.homeTeam || !match?.awayTeam) {
-    throw createHttpError(
-      "The football data provider returned an incomplete fixture.",
-      502,
-    );
+function parseEventClock(event) {
+  const displayValue = String(event?.clock?.displayValue || "");
+  const clockParts = displayValue.match(/(\d+)(?:['’])?(?:\+(\d+))?/);
+
+  if (clockParts) {
+    return {
+      elapsed: Number(clockParts[1]),
+      extra: clockParts[2] ? Number(clockParts[2]) : null,
+    };
   }
 
-  const homeTeam = teamName(match.homeTeam);
-  const awayTeam = teamName(match.awayTeam);
-  const winner = mapWinner(match.score, homeTeam, awayTeam);
+  const seconds = Number(event?.clock?.value);
+  return {
+    elapsed: Number.isFinite(seconds) ? Math.ceil(seconds / 60) : null,
+    extra: null,
+  };
+}
+
+function mapEvent(event, competitorsByTeamId) {
+  const eventType = String(event?.type?.type || "").toLowerCase();
+  const eventText = String(event?.type?.text || "Match Event");
+  const { elapsed, extra } = parseEventClock(event);
+  const teamId = String(event?.team?.id || "");
+  const competitor = competitorsByTeamId.get(teamId);
+  const participants = Array.isArray(event?.participants)
+    ? event.participants
+    : [];
+  const player = participants[0]?.athlete?.displayName || null;
+  const secondPlayer = participants[1]?.athlete?.displayName || null;
+  const isSubstitution = eventType.includes("substitution");
+
+  let type = "Match Event";
+  if (event?.scoringPlay || eventType.includes("goal")) type = "Goal";
+  else if (eventType.includes("card")) type = "Card";
+  else if (isSubstitution) type = "Substitution";
+  else if (eventType.includes("penalty")) type = "Penalty";
+  else if (eventType.includes("var")) type = "VAR";
 
   return {
-    id: String(match.id),
-    kickoff: match.utcDate || null,
-    venue: match.venue || null,
-    city: null,
-    status: {
-      short: match.status || null,
-      long: mapStatus(match.status),
-    },
-    competition: {
-      name: match.competition?.name || "FIFA World Cup",
-      round: match.stage || match.group || match.matchday || null,
-      season: match.season?.startDate?.slice(0, 4) || null,
-    },
+    elapsed,
+    extra,
+    team: event?.team?.displayName || teamName(competitor) || null,
+    teamCountryCode: teamCountryCode(competitor),
+    player,
+    assist: secondPlayer,
+    type,
+    detail: eventText,
+    comments: event?.text || null,
+  };
+}
+
+function isRelevantEvent(event) {
+  const type = String(event?.type?.type || "").toLowerCase();
+  return Boolean(
+    event?.scoringPlay ||
+      type.includes("goal") ||
+      type.includes("card") ||
+      type.includes("substitution") ||
+      type.includes("penalty") ||
+      type.includes("var"),
+  );
+}
+
+function getShootoutScore(competitor) {
+  return parseScore(
+    competitor?.shootoutScore ??
+      competitor?.shootout?.score ??
+      competitor?.penaltyScore,
+  );
+}
+
+function mapFixture(event, options = {}) {
+  const competition =
+    options.competition || requireArray(event?.competitions, "fixtures")[0];
+
+  if (!event?.id || !competition) {
+    throw createHttpError("ESPN returned an incomplete fixture.", 502);
+  }
+
+  const home = findCompetitor(competition, "home");
+  const away = findCompetitor(competition, "away");
+
+  if (!home || !away) {
+    throw createHttpError("ESPN returned an incomplete fixture.", 502);
+  }
+
+  const competitorsByTeamId = new Map(
+    [home, away].map((competitor) => [String(competitor.id), competitor]),
+  );
+  const rawEvents = options.events || competition.details || [];
+
+  return {
+    id: String(event.id),
+    kickoff: competition.date || event.date || null,
+    venue:
+      options.venue?.fullName ||
+      competition.venue?.fullName ||
+      event.venue?.displayName ||
+      null,
+    city:
+      options.venue?.address?.city ||
+      competition.venue?.address?.city ||
+      null,
+    status: mapStatus(competition.status || event.status),
+    competition: mapCompetition(
+      event,
+      competition,
+      options.league,
+    ),
     teams: {
-      home: homeTeam,
-      away: awayTeam,
-      homeCountryCode: teamCountryCode(match.homeTeam),
-      awayCountryCode: teamCountryCode(match.awayTeam),
-      ...winner,
+      home: teamName(home),
+      away: teamName(away),
+      homeCountryCode: teamCountryCode(home),
+      awayCountryCode: teamCountryCode(away),
+      homeWinner: home.winner === true,
+      awayWinner: away.winner === true,
     },
     goals: {
-      home: match.score?.fullTime?.home ?? null,
-      away: match.score?.fullTime?.away ?? null,
+      home: parseScore(home.score),
+      away: parseScore(away.score),
     },
     score: {
       penalty: {
-        home: match.score?.penalties?.home ?? null,
-        away: match.score?.penalties?.away ?? null,
+        home: getShootoutScore(home),
+        away: getShootoutScore(away),
       },
     },
-    events: mapFixtureEvents(match),
+    events: requireArray(rawEvents, "fixture events")
+      .filter(isRelevantEvent)
+      .map((fixtureEvent) =>
+        mapEvent(fixtureEvent, competitorsByTeamId),
+      ),
   };
 }
 
@@ -295,25 +297,19 @@ function translateProviderError(error) {
   }
 
   if (!error.response) {
-    return createHttpError("The football data provider is unavailable.", 502);
+    return createHttpError("ESPN is unavailable.", 502);
   }
 
-  if (error.response.status === 403) {
-    return createHttpError(
-      "The football data provider rejected the API key or plan access.",
-      502,
-    );
+  if (error.response.status === 404) {
+    return createHttpError("Fixture not found.", 404);
   }
 
   if (error.response.status === 429) {
-    return createHttpError(
-      "The football data provider rate limit was reached.",
-      503,
-    );
+    return createHttpError("ESPN rate limiting was reached.", 503);
   }
 
   return createHttpError(
-    `The football data provider returned status ${error.response.status}.`,
+    `ESPN returned status ${error.response.status}.`,
     502,
   );
 }
@@ -324,11 +320,18 @@ async function getWorldCupFixtures() {
 
   try {
     const response = await client.get(
-      `/competitions/${configuration.competitionCode}/matches`,
-      { params: { season: configuration.season } },
+      `/${configuration.league}/scoreboard`,
+      {
+        params: {
+          dates: configuration.season,
+          limit: 1000,
+        },
+      },
     );
+    const events = requireArray(response?.data?.events, "fixtures");
+    const league = response?.data?.leagues?.[0];
 
-    return requireArray(response?.data?.matches, "fixtures").map(mapFixture);
+    return events.map((event) => mapFixture(event, { league }));
   } catch (error) {
     throw translateProviderError(error);
   }
@@ -339,18 +342,30 @@ async function getFixtureFullDetails(fixtureId) {
   const client = createClient(configuration);
 
   try {
-    const response = await client.get(`/matches/${fixtureId}`);
+    const response = await client.get(
+      `/${configuration.league}/summary`,
+      { params: { event: fixtureId } },
+    );
+    const competition = response?.data?.header?.competitions?.[0];
 
-    if (!response?.data?.id) {
+    if (!competition?.id) {
       throw createHttpError("Fixture not found.", 404);
     }
 
-    return mapFixture(response.data);
+    const event = {
+      id: competition.id,
+      date: competition.date,
+      season: response?.data?.header?.season,
+      status: competition.status,
+    };
+
+    return mapFixture(event, {
+      competition,
+      events: response?.data?.keyEvents || competition.details || [],
+      league: response?.data?.header?.league,
+      venue: response?.data?.gameInfo?.venue,
+    });
   } catch (error) {
-    if (error.response?.status === 404) {
-      throw createHttpError("Fixture not found.", 404);
-    }
-
     throw translateProviderError(error);
   }
 }
